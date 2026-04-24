@@ -8,10 +8,22 @@ dotenv.config();
 // REGISTER
 export const registerUser = async (req, res) => {
   try {
+
     const { name, email, password, role } = req.body;
 
+    // CHECK USER ALREADY EXISTS
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: "Email already registered"
+      });
+    }
+
+    // HASH PASSWORD
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // CREATE USER
     const user = new User({
       name,
       email,
@@ -21,10 +33,16 @@ export const registerUser = async (req, res) => {
 
     await user.save();
 
-    res.json({ message: "User Registered " });
+    res.json({
+      message: "User Registered"
+    });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+
+    res.status(500).json({
+      error: err.message
+    });
+
   }
 };
 
