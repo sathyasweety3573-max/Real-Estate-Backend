@@ -1,33 +1,42 @@
 import express from "express";
-import { createProperty, getProperties, updateProperty, deleteProperty, searchProperties } from "../controllers/propertyController.js";
-import { getSingleProperty } from "../controllers/propertyController.js";
-import { protect } from "../middleware/authMiddleware.js";
-import { authorizeRoles } from "../middleware/roleMiddleware.js";
+
+import {
+  addProperty,
+  getProperties,
+  getSingleProperty,
+  updateProperty,
+  deleteProperty,
+  searchProperties,
+} from "../controllers/propertyController.js";
+
+import {
+  protect,
+  adminOnly,
+} from "../middleware/authMiddleware.js";
+
 import { toggleFavorite } from "../controllers/authController.js";
-import { adminOnly } from "../middleware/roleMiddleware.js";
-import { addProperty } from "../controllers/propertyController.js";
 
 const router = express.Router();
 
-//Add property
-router.post("/", protect, adminOnly, addProperty);
-
-// GET ALL
-router.get("/", getProperties);
-
-//GET SINGLE PROPERTY
-router.get("/:id", getSingleProperty);
-
-// SEARCH
+// SEARCH — keep before /:id
 router.get("/search", searchProperties);
 
-// UPDATE
-router.put("/:id", protect, authorizeRoles("agent"), updateProperty);
+// GET ALL PROPERTIES
+router.get("/", getProperties);
 
-// DELETE
-router.delete("/:id", protect, authorizeRoles("agent"), deleteProperty);
+// ADD PROPERTY — admin only
+router.post("/", protect, adminOnly, addProperty);
 
-//Favorite
+// FAVORITE — logged-in users
 router.post("/favorite/:id", protect, toggleFavorite);
+
+// GET SINGLE PROPERTY
+router.get("/:id", getSingleProperty);
+
+// UPDATE PROPERTY — admin only
+router.put("/:id", protect, adminOnly, updateProperty);
+
+// DELETE PROPERTY — admin only
+router.delete("/:id", protect, adminOnly, deleteProperty);
 
 export default router;

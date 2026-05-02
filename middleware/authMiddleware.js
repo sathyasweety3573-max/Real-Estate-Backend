@@ -1,37 +1,45 @@
-
 import jwt from "jsonwebtoken";
 
+// ================= PROTECT ROUTE =================
+
 export const protect = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
 
-  console.log("HEADER:", req.headers.authorization);
-  console.log("SECRET:", process.env.JWT_SECRET);
-
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
-    return res.status(401).json("No token");
-  }
-
-    try {
+    if (
+      !authHeader ||
+      !authHeader.startsWith("Bearer ")
+    ) {
+      return res.status(401).json({
+        message: "No token. Please login first",
+      });
+    }
 
     const token = authHeader.split(" ")[1];
-
-    console.log("TOKEN:", token);
 
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET
     );
 
-    console.log("DECODED:", decoded);
-
     req.user = decoded;
 
     next();
-      } catch (err) {
-
-    console.log("JWT ERROR:", err.message);
-
-    res.status(401).json("Invalid token");
+  } catch (err) {
+    return res.status(401).json({
+      message: "Invalid or expired token",
+    });
   }
+};
+
+// ================= ADMIN ONLY =================
+
+export const adminOnly = (req, res, next) => {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({
+      message: "Access denied. Admin only",
+    });
+  }
+
+  next();
 };
