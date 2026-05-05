@@ -8,12 +8,20 @@ export const addProperty = async (req, res) => {
       title,
       price,
       location,
+      city,
+      state,
+      country,
+      pincode,
       description,
       type,
+      purpose,
       bedrooms,
       bathrooms,
       area,
+      amenities,
       images,
+      isFeatured,
+      isAvailable,
     } = req.body;
 
     if (
@@ -22,36 +30,46 @@ export const addProperty = async (req, res) => {
       !location ||
       !description ||
       !type ||
+      !purpose ||
       !bedrooms ||
       !bathrooms ||
       !area
     ) {
       return res.status(400).json({
-        message: "Please fill all fields",
+        success: false,
+        message: "Please fill all required fields",
       });
     }
 
-    const property = new Property({
+    const property = await Property.create({
       title,
-      price,
+      price: Number(price),
       location,
+      city: city || "",
+      state: state || "",
+      country: country || "India",
+      pincode: pincode || "",
       description,
       type,
-      bedrooms,
-      bathrooms,
-      area,
+      purpose,
+      bedrooms: Number(bedrooms),
+      bathrooms: Number(bathrooms),
+      area: Number(area),
+      amenities: amenities || [],
       images: images || [],
+      isFeatured: isFeatured || false,
+      isAvailable: isAvailable === false ? false : true,
       createdBy: req.user.id,
     });
 
-    await property.save();
-
     res.status(201).json({
+      success: true,
       message: "Property added successfully",
       property,
     });
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: "Property upload failed",
       error: error.message,
     });
@@ -62,13 +80,18 @@ export const addProperty = async (req, res) => {
 
 export const getProperties = async (req, res) => {
   try {
-    const properties = await Property.find().sort({
-      createdAt: -1,
-    });
+    const properties = await Property.find({
+      isAvailable: true,
+    }).sort({ createdAt: -1 });
 
-    res.status(200).json(properties);
+    res.status(200).json({
+      success: true,
+      count: properties.length,
+      properties,
+    });
   } catch (err) {
     res.status(500).json({
+      success: false,
       message: "Failed to fetch properties",
       error: err.message,
     });
@@ -81,17 +104,25 @@ export const getSingleProperty = async (req, res) => {
   try {
     const property = await Property.findById(
       req.params.id
-    );
+    ).populate("createdBy", "name email role");
 
     if (!property) {
       return res.status(404).json({
+        success: false,
         message: "Property not found",
       });
     }
 
-    res.status(200).json(property);
+    property.views += 1;
+    await property.save();
+
+    res.status(200).json({
+      success: true,
+      property,
+    });
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: "Failed to fetch property",
       error: error.message,
     });
@@ -102,12 +133,11 @@ export const getSingleProperty = async (req, res) => {
 
 export const updateProperty = async (req, res) => {
   try {
-    const property = await Property.findById(
-      req.params.id
-    );
+    const property = await Property.findById(req.params.id);
 
     if (!property) {
       return res.status(404).json({
+        success: false,
         message: "Property not found",
       });
     }
@@ -122,11 +152,13 @@ export const updateProperty = async (req, res) => {
     );
 
     res.status(200).json({
+      success: true,
       message: "Property updated successfully",
       property: updated,
     });
   } catch (err) {
     res.status(500).json({
+      success: false,
       message: "Property update failed",
       error: err.message,
     });
@@ -137,12 +169,11 @@ export const updateProperty = async (req, res) => {
 
 export const deleteProperty = async (req, res) => {
   try {
-    const property = await Property.findById(
-      req.params.id
-    );
+    const property = await Property.findById(req.params.id);
 
     if (!property) {
       return res.status(404).json({
+        success: false,
         message: "Property not found",
       });
     }
@@ -150,46 +181,71 @@ export const deleteProperty = async (req, res) => {
     await property.deleteOne();
 
     res.status(200).json({
+      success: true,
       message: "Property deleted successfully",
     });
   } catch (err) {
     res.status(500).json({
+      success: false,
       message: "Property delete failed",
       error: err.message,
     });
   }
 };
 
-// ================= SEARCH PROPERTIES =================
+// ================= SEARCH + FILTER PROPERTIES =================
 
 export const searchProperties = async (req, res) => {
   try {
     const {
+      keyword,
       location,
+      city,
       minPrice,
       maxPrice,
       type,
+      purpose,
       bedrooms,
+      bathrooms,
+      minArea,
+      maxArea,
+      amenities,
+      sort,
     } = req.query;
 
-    const query = {};
+    const query = { isAvailable: true };
+
+    if (keyword) {
+      query.$or = [
+        { title: { $regex: keyword, $options: "i" } },
+        { description: { $regex: keyword, $options: "i" } },
+        { location: { $regex: keyword, $options: "i" } },
+        { city: { $regex: keyword, $options: "i" } },
+      ];
+    }
 
     if (location) {
-      query.location = {
-        $regex: location,
-        $options: "i",
-      };
+      query.location = { $regex: location, $options: "i" };
+    }
+
+    if (city) {
+      query.city = { $regex: city, $options: "i" };
     }
 
     if (type) {
-      query.type = {
-        $regex: type,
-        $options: "i",
-      };
+      query.type = type;
+    }
+
+    if (purpose) {
+      query.purpose = purpose;
     }
 
     if (bedrooms) {
-      query.bedrooms = bedrooms;
+      query.bedrooms = { $gte: Number(bedrooms) };
+    }
+
+    if (bathrooms) {
+      query.bathrooms = { $gte: Number(bathrooms) };
     }
 
     if (minPrice || maxPrice) {
@@ -204,15 +260,91 @@ export const searchProperties = async (req, res) => {
       }
     }
 
-    const properties = await Property.find(query).sort({
-      createdAt: -1,
-    });
+    if (minArea || maxArea) {
+      query.area = {};
 
-    res.status(200).json(properties);
+      if (minArea) {
+        query.area.$gte = Number(minArea);
+      }
+
+      if (maxArea) {
+        query.area.$lte = Number(maxArea);
+      }
+    }
+
+    if (amenities) {
+      query.amenities = {
+        $all: amenities.split(",").map((item) => item.trim()),
+      };
+    }
+
+    let sortOption = { createdAt: -1 };
+
+    if (sort === "priceLow") sortOption = { price: 1 };
+    if (sort === "priceHigh") sortOption = { price: -1 };
+    if (sort === "popular") sortOption = { views: -1 };
+
+    const properties = await Property.find(query).sort(sortOption);
+
+    res.status(200).json({
+      success: true,
+      count: properties.length,
+      properties,
+    });
   } catch (err) {
     res.status(500).json({
+      success: false,
       message: "Search failed",
       error: err.message,
+    });
+  }
+};
+
+// ================= FEATURED PROPERTIES =================
+
+export const getFeaturedProperties = async (req, res) => {
+  try {
+    const properties = await Property.find({
+      isFeatured: true,
+      isAvailable: true,
+    })
+      .sort({ createdAt: -1 })
+      .limit(6);
+
+    res.status(200).json({
+      success: true,
+      count: properties.length,
+      properties,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch featured properties",
+      error: error.message,
+    });
+  }
+};
+
+// ================= TRENDING PROPERTIES =================
+
+export const getTrendingProperties = async (req, res) => {
+  try {
+    const properties = await Property.find({
+      isAvailable: true,
+    })
+      .sort({ views: -1 })
+      .limit(6);
+
+    res.status(200).json({
+      success: true,
+      count: properties.length,
+      properties,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch trending properties",
+      error: error.message,
     });
   }
 };

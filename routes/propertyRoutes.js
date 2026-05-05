@@ -7,36 +7,42 @@ import {
   updateProperty,
   deleteProperty,
   searchProperties,
+  getFeaturedProperties,
+  getTrendingProperties,
 } from "../controllers/propertyController.js";
 
-import {
-  protect,
-  adminOnly,
-} from "../middleware/authMiddleware.js";
-
-import { toggleFavorite } from "../controllers/authController.js";
+import { protect } from "../middleware/authMiddleware.js";
+import { adminOnly } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-// SEARCH — keep before /:id
+// ================= PUBLIC ROUTES =================
+
+// 🔍 SEARCH (keep before /:id)
 router.get("/search", searchProperties);
 
-// GET ALL PROPERTIES
+// ⭐ FEATURED
+router.get("/featured", getFeaturedProperties);
+
+// 🔥 TRENDING
+router.get("/trending", getTrendingProperties);
+
+// 🏡 GET ALL
 router.get("/", getProperties);
 
-// ADD PROPERTY — admin only
-router.post("/", protect, adminOnly, addProperty);
-
-// FAVORITE — logged-in users
-router.post("/favorite/:id", protect, toggleFavorite);
-
-// GET SINGLE PROPERTY
+// 📄 GET SINGLE
 router.get("/:id", getSingleProperty);
 
-// UPDATE PROPERTY — admin only
+
+// ================= ADMIN ROUTES =================
+
+// ➕ ADD PROPERTY
+router.post("/", protect, adminOnly, addProperty);
+
+// ✏️ UPDATE
 router.put("/:id", protect, adminOnly, updateProperty);
 
-// DELETE PROPERTY — admin only
+// ❌ DELETE
 router.delete("/:id", protect, adminOnly, deleteProperty);
 
 export default router;

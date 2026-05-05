@@ -6,51 +6,79 @@ import connectDB from "./config/db.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import propertyRoutes from "./routes/propertyRoutes.js";
-import agentRoutes from "./routes/agentRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
-
+import contactRoutes from "./routes/contactRoutes.js"; 
 dotenv.config();
 
 const app = express();
 
+// ================= DATABASE =================
+connectDB();
+
 // ================= MIDDLEWARE =================
 
+// CORS
 app.use(
   cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      process.env.FRONTEND_URL,
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
   })
 );
 
-app.use(express.json());
+// Body parser
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 
-// ================= DATABASE =================
-
-connectDB();
-
-// ================= TEST ROUTE =================
+// ================= HEALTH CHECK =================
 
 app.get("/", (req, res) => {
-  res.send("Real Estate API Running Successfully 🚀");
+  res.status(200).json({
+    success: true,
+    message: "Real Estate API Running Successfully 🚀",
+  });
+});
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Server is healthy ✅",
+    time: new Date().toISOString(),
+  });
 });
 
 // ================= API ROUTES =================
 
 app.use("/api/auth", authRoutes);
 app.use("/api/property", propertyRoutes);
-app.use("/api/agent", agentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/booking", bookingRoutes);
+app.use("/api/contact", contactRoutes); // ✅ ENABLED
 
 // ================= 404 ROUTE =================
 
 app.use((req, res) => {
   res.status(404).json({
+    success: false,
     message: "API route not found",
+  });
+});
+
+// ================= GLOBAL ERROR HANDLER =================
+
+app.use((err, req, res, next) => {
+  console.error("SERVER ERROR:", err);
+
+  res.status(err.statusCode || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
   });
 });
 
@@ -59,5 +87,5 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

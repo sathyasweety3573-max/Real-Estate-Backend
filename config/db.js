@@ -2,12 +2,25 @@ import mongoose from "mongoose";
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URL);
-    console.log(" MongoDB Connected");
+    const conn = await mongoose.connect(process.env.MONGO_URL);
+
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (err) {
-    console.log(err);
+    console.error("❌ MongoDB Connection Error:", err.message);
     process.exit(1);
   }
 };
+
+mongoose.connection.on("disconnected", () => {
+  console.log("⚠️ MongoDB Disconnected");
+});
+
+mongoose.connection.on("reconnected", () => {
+  console.log("🔁 MongoDB Reconnected");
+});
+
+mongoose.connection.on("error", (err) => {
+  console.log("❌ MongoDB Error:", err.message);
+});
 
 export default connectDB;

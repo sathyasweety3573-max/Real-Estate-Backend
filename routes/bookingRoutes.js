@@ -5,9 +5,11 @@ import {
   getUserBookings,
   getAllBookings,
   updateBookingStatus,
+  deleteBooking,
 } from "../controllers/bookingController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
+import { adminOnly } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
@@ -22,10 +24,13 @@ router.get("/my", protect, getUserBookings);
 
 // ================= ADMIN ROUTES =================
 
-// ✅ Get all bookings (admin)
-router.get("/", protect, getAllBookings);
+// ✅ Get all bookings (ADMIN ONLY)
+router.get("/", protect, adminOnly, getAllBookings);
 
-// ✅ Update booking status (admin)
-router.put("/:id", protect, updateBookingStatus);
+// ✅ Update booking status (ADMIN ONLY)
+router.put("/:id", protect, adminOnly, updateBookingStatus);
+
+// ✅ Delete booking (ADMIN ONLY)
+router.delete("/:id", protect, adminOnly, deleteBooking);
 
 export default router;

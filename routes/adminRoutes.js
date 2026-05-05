@@ -1,12 +1,29 @@
 import express from "express";
-import { getUsers, deleteUser, deleteAnyProperty } from "../controllers/adminController.js";
+
+import {
+  getDashboardStats,
+  getUsers,
+  deleteUser,
+  deleteAnyProperty,
+} from "../controllers/adminController.js";
+
 import { protect } from "../middleware/authMiddleware.js";
-import { authorizeRoles, adminOnly } from "../middleware/roleMiddleware.js";
+import { adminOnly } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-router.get("/users", protect, authorizeRoles("admin"), getUsers);
-router.delete("/user/:id", protect, authorizeRoles("admin"), deleteUser);
-router.delete("/property/:id", protect, authorizeRoles("admin"), deleteAnyProperty);
+// ================= ADMIN DASHBOARD =================
+
+router.get("/stats", protect, adminOnly, getDashboardStats);
+
+// ================= USERS =================
+
+router.get("/users", protect, adminOnly, getUsers);
+
+router.delete("/user/:id", protect, adminOnly, deleteUser);
+
+// ================= PROPERTIES =================
+
+router.delete("/property/:id", protect, adminOnly, deleteAnyProperty);
 
 export default router;
