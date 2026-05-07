@@ -7,6 +7,14 @@ import sgMail from "@sendgrid/mail";
 
 dotenv.config();
 
+// ================= PASSWORD VALIDATION =================
+
+const strongPassword =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+const passwordMessage =
+  "Password must be 8+ chars with uppercase, lowercase, number & special character";
+
 // ================= GENERATE TOKEN =================
 
 const generateToken = (user) => {
@@ -26,14 +34,7 @@ const generateToken = (user) => {
 
 export const registerUser = async (req, res) => {
   try {
-    const {
-      name,
-      email,
-      password,
-      phone,
-      location,
-      role,
-    } = req.body;
+    const { name, email, password, phone, location } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -42,9 +43,14 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({
-      email,
-    });
+    if (!strongPassword.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message: passwordMessage,
+      });
+    }
+
+    const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       return res.status(400).json({
@@ -61,7 +67,7 @@ export const registerUser = async (req, res) => {
       password: hashedPassword,
       phone: phone || "",
       location: location || "",
-      role: role === "admin" ? "admin" : "user",
+      role: "user",
     });
 
     await user.save();
@@ -175,12 +181,7 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const {
-      name,
-      phone,
-      location,
-      avatar,
-    } = req.body;
+    const { name, phone, location, avatar } = req.body;
 
     const user = await User.findById(req.user.id);
 
@@ -347,10 +348,10 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    if (password.length < 6) {
+    if (!strongPassword.test(password)) {
       return res.status(400).json({
         success: false,
-        message: "Password must be at least 6 characters",
+        message: passwordMessage,
       });
     }
 
@@ -459,4 +460,4 @@ export const getFavorites = async (req, res) => {
       error: error.message,
     });
   }
-};
+};                                           
