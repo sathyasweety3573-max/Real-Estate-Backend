@@ -24,9 +24,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Password is required"],
       minlength: 6,
-      select: false, // 🔥 IMPORTANT
+      select: false,
     },
 
+    // ✅ USER ROLE
     role: {
       type: String,
       enum: ["user", "admin"],
@@ -48,6 +49,7 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    // ❤️ FAVORITES
     favorites: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -55,12 +57,17 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
+    // 🔍 SAVED SEARCHES
     savedSearches: [
       {
         location: String,
+
         propertyType: String,
+
         minPrice: Number,
+
         maxPrice: Number,
+
         purpose: {
           type: String,
           enum: ["sale", "rent"],
@@ -69,12 +76,23 @@ const userSchema = new mongoose.Schema(
     ],
 
     // 🔐 FORGOT PASSWORD
-    resetPasswordToken: String,
-    resetPasswordExpire: Date,
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+
+    resetPasswordExpire: {
+      type: Date,
+      default: null,
+    },
   },
+
   {
     timestamps: true,
   }
 );
 
-export default mongoose.model("User", userSchema);
+const User =
+  mongoose.model("User", userSchema);
+
+export default User;
