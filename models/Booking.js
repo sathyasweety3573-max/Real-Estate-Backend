@@ -2,25 +2,27 @@ import mongoose from "mongoose";
 
 const bookingSchema = new mongoose.Schema(
   {
+    // 👤 USER
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
+    // 🏡 PROPERTY
     property: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Property",
       required: true,
     },
 
-    // 📅 booking date
+    // 📅 BOOKING DATE
     bookingDate: {
       type: Date,
       default: Date.now,
     },
 
-    // 👤 user details
+    // 👤 USER DETAILS
     name: {
       type: String,
       required: true,
@@ -44,39 +46,72 @@ const bookingSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // 📝 message
+    // 📝 MESSAGE
     message: {
       type: String,
       default: "",
       trim: true,
     },
 
-    // 📌 status
+    // 📌 BOOKING STATUS
     status: {
       type: String,
-      enum: ["pending", "confirmed", "cancelled"],
+      enum: [
+        "pending",
+        "approved",
+        "rejected",
+        "cancelled",
+      ],
       default: "pending",
     },
 
-    // 💰 payment
+    // 💰 PAYMENT
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid"],
+      enum: [
+        "pending",
+        "paid",
+      ],
       default: "pending",
     },
 
-    // 🧑‍💼 admin approval
+    // 🧑‍💼 ADMIN APPROVAL
     approvedByAdmin: {
       type: Boolean,
       default: false,
     },
+
+    approvedAt: {
+      type: Date,
+      default: null,
+    },
+
+    rejectedAt: {
+      type: Date,
+      default: null,
+    },
+
+    adminMessage: {
+      type: String,
+      default: "",
+    },
   },
+
   {
     timestamps: true,
   }
 );
 
-// 🔥 prevent duplicate booking (same user + property)
-bookingSchema.index({ user: 1, property: 1 }, { unique: true });
+// 🚫 prevent duplicate booking
+bookingSchema.index(
+  { user: 1, property: 1 },
+  { unique: true }
+);
 
-export default mongoose.model("Booking", bookingSchema);
+const Booking =
+  mongoose.model(
+    "Booking",
+    bookingSchema
+  );
+
+export default Booking;

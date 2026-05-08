@@ -13,24 +13,50 @@ import { adminOnly } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-// ================= USER ROUTES =================
+// ======================================================
+// USER ROUTES
+// ======================================================
 
-// ✅ Create booking
-router.post("/:id", protect, createBooking);
+// ✅ CREATE BOOKING
+router.post(
+  "/:id",
+  protect,
+  createBooking
+);
 
-// ✅ Get logged-in user bookings
-router.get("/my", protect, getUserBookings);
+// ✅ GET LOGGED-IN USER BOOKINGS
+router.get(
+  "/my",
+  protect,
+  getUserBookings
+);
 
+// ======================================================
+// ADMIN ROUTES
+// ======================================================
 
-// ================= ADMIN ROUTES =================
+// ✅ GET ALL BOOKINGS
+router.get(
+  "/",
+  protect,
+  adminOnly,
+  getAllBookings
+);
 
-// ✅ Get all bookings (ADMIN ONLY)
-router.get("/", protect, adminOnly, getAllBookings);
+// ✅ APPROVE / REJECT / UPDATE BOOKING
+router.put(
+  "/:id/status",
+  protect,
+  adminOnly,
+  updateBookingStatus
+);
 
-// ✅ Update booking status (ADMIN ONLY)
-router.put("/:id", protect, adminOnly, updateBookingStatus);
-
-// ✅ Delete booking (ADMIN ONLY)
-router.delete("/:id", protect, adminOnly, deleteBooking);
+// ✅ DELETE BOOKING
+router.delete(
+  "/:id",
+  protect,
+  adminOnly,
+  deleteBooking
+);
 
 export default router;

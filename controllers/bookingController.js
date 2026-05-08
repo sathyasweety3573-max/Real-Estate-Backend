@@ -23,6 +23,13 @@ export const createBooking = async (req, res) => {
       });
     }
 
+    if (req.user.role === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Admin cannot book properties",
+      });
+    }
+
     const property = await Property.findById(propertyId);
 
     if (!property) {
@@ -32,17 +39,10 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    if (!property.isAvailable) {
+    if (property.isAvailable === false) {
       return res.status(400).json({
         success: false,
         message: "This property is not available",
-      });
-    }
-
-    if (req.user.role === "admin") {
-      return res.status(403).json({
-        success: false,
-        message: "Admin cannot book properties",
       });
     }
 
@@ -69,14 +69,31 @@ export const createBooking = async (req, res) => {
       status: "pending",
       paymentStatus: "pending",
       approvedByAdmin: false,
+      approvedAt: null,
+      rejectedAt: null,
+      adminMessage: "",
     });
+
+    const populatedBooking = await Booking.findById(booking._id)
+      .populate("user", "name email phone role")
+      .populate(
+        "property",
+        "title price location images type purpose bedrooms bathrooms area"
+      );
 
     res.status(201).json({
       success: true,
-      message: "Booking request sent successfully",
-      booking,
+      message: "Booking request sent successfully. Waiting for admin approval.",
+      booking: populatedBooking,
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "You already booked this property",
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: "Booking failed",
@@ -94,7 +111,7 @@ export const getUserBookings = async (req, res) => {
     })
       .populate(
         "property",
-        "title price location images type purpose"
+        "title price location images type purpose bedrooms bathrooms area"
       )
       .sort({ createdAt: -1 });
 
@@ -116,11 +133,18 @@ export const getUserBookings = async (req, res) => {
 
 export const getAllBookings = async (req, res) => {
   try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only admin can view all bookings",
+      });
+    }
+
     const bookings = await Booking.find()
-      .populate("user", "name email phone")
+      .populate("user", "name email phone role")
       .populate(
         "property",
-        "title price location images type purpose"
+        "title price location images type purpose bedrooms bathrooms area"
       )
       .sort({ createdAt: -1 });
 
@@ -142,9 +166,16 @@ export const getAllBookings = async (req, res) => {
 
 export const updateBookingStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only admin can update booking status",
+      });
+    }
 
-    if (!["pending", "confirmed", "cancelled"].includes(status)) {
+    const { status, adminMessage } = req.body;
+
+    if (!["pending", "approved", "rejected", "cancelled"].includes(status)) {
       return res.status(400).json({
         success: false,
         message: "Invalid booking status",
@@ -161,14 +192,40 @@ export const updateBookingStatus = async (req, res) => {
     }
 
     booking.status = status;
-    booking.approvedByAdmin = status === "confirmed";
+    booking.adminMessage = adminMessage || "";
+
+    if (status === "approved") {
+      booking.approvedByAdmin = true;
+      booking.approvedAt = new Date();
+      booking.rejectedAt = null;
+    } else if (status === "rejected") {
+      booking.approvedByAdmin = false;
+      booking.rejectedAt = new Date();
+      booking.approvedAt = null;
+    } else {
+      booking.approvedByAdmin = false;
+      booking.approvedAt = null;
+      booking.rejectedAt = null;
+    }
 
     await booking.save();
 
+    const updatedBooking = await Booking.findById(booking._id)
+      .populate("user", "name email phone role")
+      .populate(
+        "property",
+        "title price location images type purpose bedrooms bathrooms area"
+      );
+
     res.status(200).json({
       success: true,
-      message: "Booking status updated successfully",
-      booking,
+      message:
+        status === "approved"
+          ? "Booking approved successfully ✅"
+          : status === "rejected"
+          ? "Booking rejected successfully ❌"
+          : "Booking status updated successfully",
+      booking: updatedBooking,
     });
   } catch (error) {
     res.status(500).json({
@@ -183,6 +240,13 @@ export const updateBookingStatus = async (req, res) => {
 
 export const deleteBooking = async (req, res) => {
   try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only admin can delete bookings",
+      });
+    }
+
     const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
