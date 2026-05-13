@@ -1,33 +1,91 @@
-# 🏠 Real Estate Backend API
+# 🏡 Real Estate Backend API
 
-A powerful backend API for a Real Estate Web Application built using **Node.js, Express.js, MongoDB, JWT Authentication, and Cloudinary**.
+A powerful and secure backend API for a Real Estate Web Application built using **Node.js, Express.js, MongoDB, JWT Authentication, Cloudinary, and Role-Based Authorization**.
+
+This project supports:
+
+- User Authentication
+- Admin Dashboard
+- Property Management
+- Booking System
+- Favorites
+- Contact API
+- Cloudinary Image Upload
+- Protected Routes
+- Role-Based Access
 
 ---
 
 # 🚀 Features
 
-* User Authentication (Register/Login)
-* JWT Authentication
-* Role-Based Authorization
-* Admin Property Management
-* Agent Property Management
-* Property Search & Filters
-* Favorite Properties
-* Cloudinary Multiple Image Upload
-* Secure Protected Routes
+✅ User Register & Login  
+✅ JWT Authentication  
+✅ Role-Based Authorization  
+✅ Admin & User Demo Credentials  
+✅ Property CRUD Operations  
+✅ Add Property (Admin Only)  
+✅ Booking System  
+✅ Favorite Properties  
+✅ My Bookings  
+✅ Contact Form API  
+✅ Cloudinary Multiple Image Upload  
+✅ Protected Routes  
+✅ Secure Password Hashing  
+✅ Health Check API  
+✅ MongoDB Database Integration
+
+---
+
+# 🧪 Demo Credentials
+
+## 👨‍💼 Admin Login
+
+```txt
+Email: admin@demo.com
+Password: admin123
+```
+
+### Admin Features
+
+- Access Admin Dashboard
+- Add New Properties
+- Manage Property Listings
+- View Booking Requests
+- Approve or Reject Bookings
+- Upload Property Images
+
+---
+
+## 👤 User Login
+
+```txt
+Email: user@demo.com
+Password: user123
+```
+
+### User Features
+
+- Browse Properties
+- View Property Details
+- Book Properties
+- Add Favorite Properties
+- View My Bookings
+- Contact Admin
 
 ---
 
 # 🛠️ Tech Stack
 
-* Node.js
-* Express.js
-* MongoDB
-* Mongoose
-* JWT
-* bcryptjs
-* Cloudinary
-* Multer
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT Authentication
+- bcryptjs
+- Cloudinary
+- Multer
+- dotenv
+- CORS
 
 ---
 
@@ -42,7 +100,10 @@ backend/
 │
 ├── controllers/
 │   ├── authController.js
-│   └── propertyController.js
+│   ├── propertyController.js
+│   ├── adminController.js
+│   ├── bookingController.js
+│   └── contactController.js
 │
 ├── middleware/
 │   ├── authMiddleware.js
@@ -51,11 +112,20 @@ backend/
 │
 ├── models/
 │   ├── User.js
-│   └── Property.js
+│   ├── Property.js
+│   ├── Booking.js
+│   └── Contact.js
 │
 ├── routes/
 │   ├── authRoutes.js
-│   └── propertyRoutes.js
+│   ├── propertyRoutes.js
+│   ├── adminRoutes.js
+│   ├── uploadRoutes.js
+│   ├── bookingRoutes.js
+│   └── contactRoutes.js
+│
+├── utils/
+│   └── seedDemoUsers.js
 │
 ├── .env
 ├── server.js
@@ -66,7 +136,7 @@ backend/
 
 # ⚙️ Installation
 
-## Clone Repository
+## 1️⃣ Clone Repository
 
 ```bash
 git clone https://github.com/your-username/real-estate-backend.git
@@ -74,15 +144,15 @@ git clone https://github.com/your-username/real-estate-backend.git
 
 ---
 
-## Move to backend folder
+## 2️⃣ Move to Backend Folder
 
 ```bash
-cd backend
+cd real-estate-backend
 ```
 
 ---
 
-## Install dependencies
+## 3️⃣ Install Dependencies
 
 ```bash
 npm install
@@ -92,17 +162,21 @@ npm install
 
 # 🔐 Environment Variables
 
-Create a `.env` file inside backend folder.
+Create a `.env` file inside the backend folder.
 
 ```env
 PORT=5000
 
 MONGO_URI=your_mongodb_connection_string
 
-JWT_SECRET=RealEstate
+JWT_SECRET=your_secret_key
+
+FRONTEND_URL=http://localhost:5173
 
 CLOUDINARY_CLOUD_NAME=your_cloud_name
+
 CLOUDINARY_API_KEY=your_api_key
+
 CLOUDINARY_API_SECRET=your_api_secret
 ```
 
@@ -113,10 +187,18 @@ CLOUDINARY_API_SECRET=your_api_secret
 ## Development Mode
 
 ```bash
+npm run dev
+```
+
+OR
+
+```bash
 npm run server
 ```
 
-## Normal Start
+---
+
+## Production Mode
 
 ```bash
 npm start
@@ -124,14 +206,56 @@ npm start
 
 ---
 
+# ✅ Health Check API
+
+## Root Route
+
+### GET
+
+```http
+/
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Real Estate API Running Successfully 🚀"
+}
+```
+
+---
+
+## Health Route
+
+### GET
+
+```http
+/api/health
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Server is healthy ✅"
+}
+```
+
+---
+
 # 🔑 Authentication Flow
 
-```text
+```txt
 User Login
     ↓
 JWT Token Generated
     ↓
-Token Sent in Headers
+Token Stored in Frontend
+    ↓
+Authorization Header Sent
     ↓
 Protected Route Access
 ```
@@ -140,17 +264,19 @@ Protected Route Access
 
 # 🔒 Authorization Header
 
-```text
+```txt
 Authorization: Bearer YOUR_TOKEN
 ```
 
 ---
 
-# 📦 API ENDPOINTS
+# 📦 API Endpoints
 
 ---
 
 # 🔐 AUTH ROUTES
+
+---
 
 ## Register User
 
@@ -164,10 +290,9 @@ Authorization: Bearer YOUR_TOKEN
 
 ```json
 {
-  "name": "Admin",
-  "email": "admin@gmail.com",
-  "password": "123456",
-  "role": "admin"
+  "name": "Sathya",
+  "email": "sathya@gmail.com",
+  "password": "123456"
 }
 ```
 
@@ -181,20 +306,43 @@ Authorization: Bearer YOUR_TOKEN
 /api/auth/login
 ```
 
-### Request Body
+---
+
+## Demo Admin Login Body
 
 ```json
 {
-  "email": "admin@gmail.com",
-  "password": "123456"
+  "email": "admin@demo.com",
+  "password": "admin123"
 }
 ```
 
-### Success Response
+---
+
+## Demo User Login Body
 
 ```json
 {
-  "token": "JWT_TOKEN"
+  "email": "user@demo.com",
+  "password": "user123"
+}
+```
+
+---
+
+## Success Response
+
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "token": "JWT_TOKEN",
+  "user": {
+    "_id": "USER_ID",
+    "name": "Demo Admin",
+    "email": "admin@demo.com",
+    "role": "admin"
+  }
 }
 ```
 
@@ -202,17 +350,19 @@ Authorization: Bearer YOUR_TOKEN
 
 # 🏠 PROPERTY ROUTES
 
+---
+
 ## Add Property (Admin Only)
 
 ### POST
 
 ```http
-/api/properties
+/api/property
 ```
 
 ### Authorization
 
-```text
+```txt
 Bearer Token Required
 ```
 
@@ -237,7 +387,7 @@ Bearer Token Required
 ### GET
 
 ```http
-/api/properties
+/api/property
 ```
 
 ---
@@ -247,60 +397,178 @@ Bearer Token Required
 ### GET
 
 ```http
-/api/properties/:id
+/api/property/:id
 ```
 
 ---
 
-## Update Property
+## Update Property (Admin Only)
 
 ### PUT
 
 ```http
-/api/properties/:id
+/api/property/:id
 ```
 
 ---
 
-## Delete Property
+## Delete Property (Admin Only)
 
 ### DELETE
 
 ```http
-/api/properties/:id
+/api/property/:id
 ```
 
 ---
 
-## Search Properties
+# 📅 BOOKING ROUTES
+
+---
+
+## Create Booking
+
+### POST
+
+```http
+/api/booking
+```
+
+### Authorization
+
+```txt
+Bearer Token Required
+```
+
+### Request Body
+
+```json
+{
+  "property": "PROPERTY_ID",
+  "name": "Demo User",
+  "email": "user@demo.com",
+  "phone": "9876543210",
+  "message": "I want to book this property"
+}
+```
+
+---
+
+## Get My Bookings
 
 ### GET
 
 ```http
-/api/properties/search?location=Chennai&rooms=4
+/api/booking/my-bookings
+```
+
+### Authorization
+
+```txt
+Bearer Token Required
 ```
 
 ---
 
-# ☁️ Cloudinary Setup
+# 👨‍💼 ADMIN ROUTES
 
-## Install Packages
+---
 
-```bash
-npm install cloudinary multer multer-storage-cloudinary
+## Get All Booking Requests
+
+### GET
+
+```http
+/api/admin/bookings
+```
+
+### Authorization
+
+```txt
+Admin Bearer Token Required
 ```
 
 ---
 
-## Cloudinary Config
+## Update Booking Status
+
+### PATCH
+
+```http
+/api/admin/bookings/:id
+```
+
+### Authorization
+
+```txt
+Admin Bearer Token Required
+```
+
+### Request Body
+
+```json
+{
+  "status": "confirmed"
+}
+```
 
 ---
 
-# 🧪 Postman Testing
+# 📩 CONTACT ROUTES
 
 ---
 
-# Step 1 — Login
+## Send Contact Message
+
+### POST
+
+```http
+/api/contact
+```
+
+### Request Body
+
+```json
+{
+  "name": "Sathya",
+  "email": "sathya@gmail.com",
+  "message": "I want to know more about properties"
+}
+```
+
+---
+
+# ☁️ CLOUDINARY IMAGE UPLOAD
+
+---
+
+## Upload Property Image
+
+### POST
+
+```http
+/api/upload
+```
+
+### Authorization
+
+```txt
+Admin Bearer Token Required
+```
+
+### Form Data
+
+```txt
+image: selected_file
+```
+
+---
+
+# 🧪 POSTMAN TESTING
+
+---
+
+# Step 1 — Admin Login
 
 ### POST
 
@@ -312,14 +580,14 @@ http://localhost:5000/api/auth/login
 
 ```json
 {
-  "email": "admin@gmail.com",
-  "password": "123456"
+  "email": "admin@demo.com",
+  "password": "admin123"
 }
 ```
 
 ---
 
-# Step 2 — Copy Token
+# Step 2 — Copy JWT Token
 
 ```json
 {
@@ -334,14 +602,12 @@ http://localhost:5000/api/auth/login
 ### POST
 
 ```http
-http://localhost:5000/api/properties
+http://localhost:5000/api/property
 ```
 
----
+### Authorization
 
-## Authorization
-
-```text
+```txt
 Type → Bearer Token
 ```
 
@@ -349,7 +615,7 @@ Paste JWT token.
 
 ---
 
-## Body → raw → JSON
+### Body → raw → JSON
 
 ```json
 {
@@ -365,6 +631,98 @@ Paste JWT token.
 
 ---
 
+# Step 4 — User Login
+
+### POST
+
+```http
+http://localhost:5000/api/auth/login
+```
+
+### Body
+
+```json
+{
+  "email": "user@demo.com",
+  "password": "user123"
+}
+```
+
+---
+
+# Step 5 — Create Booking
+
+### POST
+
+```http
+http://localhost:5000/api/booking
+```
+
+### Authorization
+
+```txt
+Type → Bearer Token
+```
+
+Paste User JWT token.
+
+### Body
+
+```json
+{
+  "property": "PROPERTY_ID",
+  "name": "Demo User",
+  "email": "user@demo.com",
+  "phone": "9876543210",
+  "message": "I want to book this property"
+}
+```
+
+---
+
+# 🔗 Deployment
+
+## Backend Deployment
+
+Deployed using Render.
+
+Example:
+
+```txt
+https://your-backend-url.onrender.com
+```
+
+---
+
+## Frontend Deployment
+
+Deployed using Netlify.
+
+Example:
+
+```txt
+https://your-frontend-url.netlify.app
+```
+
+---
+
+# ✅ Mentor Review Notes
+
+This project includes:
+
+✅ Demo Admin Credentials  
+✅ Demo User Credentials  
+✅ Admin Dashboard  
+✅ Protected Admin Routes  
+✅ Role-Based Authentication  
+✅ Booking Management  
+✅ Property Management  
+✅ Favorites & My Bookings  
+✅ Secure JWT Authentication  
+✅ Cloudinary Image Upload  
+
+---
+
 # 👨‍💻 Author
 
-Developed by Sathya 🚀
+Developed with ❤️ by Sathya 🚀
